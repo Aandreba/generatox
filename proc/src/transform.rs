@@ -1,4 +1,50 @@
-use syn::{fold::Fold, parse_quote, token::Await, Expr, ExprAwait, ExprYield, Type};
+use proc_macro2::Span;
+use quote::format_ident;
+use std::collections::BTreeSet;
+use syn::{fold::Fold, parse_quote, token::Await, Expr, ExprAwait, ExprYield, Lifetime, Type};
+
+#[derive(Default)]
+pub struct DefineLifetimes {
+    pub lts: BTreeSet<Lifetime>,
+    pub uniques: Vec<Lifetime>,
+    pub last_idx: usize,
+}
+
+impl Fold for DefineLifetimes {
+    fn fold_generics(&mut self, i: syn::Generics) -> syn::Generics {
+        for lt in i.lifetimes() {
+            self.lts.insert(lt.lifetime.clone());
+        }
+        return syn::fold::fold_generics(self, i);
+    }
+
+    fn fold_type_reference(&mut self, mut i: syn::TypeReference) -> syn::TypeReference {
+        match &i.lifetime {
+            Some(lt) => {
+                self.lts.insert(lt.clone());
+            }
+            None => {
+                let mut lt;
+                loop {
+                    lt = Lifetime {
+                        apostrophe: Span::call_site(),
+                        ident: format_ident!("__{}", self.last_idx),
+                    };
+
+                    self.last_idx += 1;
+                    if self.lts.insert(lt.clone()) {
+                        break;
+                    }
+                }
+
+                self.uniques.push(lt.clone());
+                i.lifetime = Some(lt);
+            }
+        }
+
+        return syn::fold::fold_type_reference(self, i);
+    }
+}
 
 pub struct Transformer<'a>(pub &'a Type);
 

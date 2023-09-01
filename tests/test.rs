@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use generatox::prelude::*;
 
 #[test]
@@ -11,7 +13,7 @@ fn test() {
 }
 
 generator! {
-    pub fn entropy_by_depth(data: &[u8], depth: usize) yield f32 {
+    pub fn entropy_by_depth<'a>(data: Cow<'a, [u8]>, depth: usize) yield f32 {
         if depth % 2 != 0 {
             panic!("depth must be an even number")
         }
@@ -33,11 +35,5 @@ generator! {
 }
 
 fn count(needle: u8, mut haystack: &[u8]) -> usize {
-    let mut count = 0;
-    while let Some(i) = memchr::memchr(needle, haystack) {
-        haystack = &haystack[i + 1..];
-        count += 1
-    }
-
-    return count;
+    todo!()
 }

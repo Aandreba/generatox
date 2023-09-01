@@ -23,6 +23,15 @@ pub struct Wrapper<Fut, Y> {
     phantom: Ghostly<Y>,
 }
 
+impl<Fut, Y> Wrapper<Fut, Y> {
+    pub const fn new(fut: Fut) -> Self {
+        return Self {
+            fut,
+            phantom: Ghostly(PhantomData),
+        };
+    }
+}
+
 impl<Fut: Future, Y> Generator for Wrapper<Fut, Y> {
     type Yield = Y;
     type Return = Fut::Output;
