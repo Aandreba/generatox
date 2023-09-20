@@ -1,14 +1,22 @@
 use std::borrow::Cow;
+use std::pin::pin;
 
 use generatox::prelude::*;
 
 #[test]
 fn test() {
-    let range = range(0, 10);
-    pin_mut!(range);
+    let range = pin!(range(0, 10));
 
     for i in range.yields() {
         println!("{i}")
+    }
+}
+
+generator! {
+    pub fn range(start: i32, end: i32) yield i32 {
+        for i in start..end {
+            yield i;
+        }
     }
 }
 

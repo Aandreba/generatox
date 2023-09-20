@@ -61,7 +61,7 @@ impl Fold for Transformer<'_> {
 
                 return Expr::Await(ExprAwait {
                     attrs,
-                    base: parse_quote! { ::generatox::wrapper::r#yield::<#ty>(#expr) },
+                    base: parse_quote! { unsafe { ::generatox::wrapper::r#yield::<#ty>(#expr) } },
                     dot_token: Default::default(),
                     await_token: Await {
                         span: yield_token.span,

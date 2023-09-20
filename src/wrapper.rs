@@ -63,7 +63,7 @@ impl<Fut: Future, Y> Generator for Wrapper<Fut, Y> {
     }
 }
 
-pub fn r#yield<T>(value: T) -> PendingOnce<T> {
+pub unsafe fn r#yield<T>(value: T) -> PendingOnce<T> {
     return PendingOnce(Some(value));
 }
 
@@ -129,7 +129,7 @@ pub fn noop_waker_ref() -> &'static Waker {
 }
 
 #[derive(Default)]
-pub struct Ghostly<T: ?Sized>(PhantomData<T>);
+struct Ghostly<T: ?Sized>(PhantomData<T>);
 
 impl<T: ?Sized> RefUnwindSafe for Ghostly<T> {}
 unsafe impl<T: ?Sized> Send for Ghostly<T> {}

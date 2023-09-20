@@ -3,7 +3,7 @@ use corelib::ops::DerefMut;
 use std::pin::Pin;
 
 pub mod prelude {
-    pub use crate::{generator, pin_mut, Generator};
+    pub use crate::{generator, Generator};
 }
 
 pub use generatox_proc::generator;
@@ -56,14 +56,4 @@ impl<T: DerefMut<Target = G>, G: Generator> Iterator for Yields<T> {
             State::Return(_) => None,
         }
     }
-}
-
-#[macro_export]
-macro_rules! pin_mut {
-    ($i:ident) => {
-        let mut $i = $i;
-
-        #[allow(unused_mut)]
-        let mut $i = unsafe { $crate::corelib::pin::Pin::new_unchecked(&mut $i) };
-    };
 }
