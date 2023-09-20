@@ -24,20 +24,30 @@ pub trait Generator {
     fn resume(self: Pin<&mut Self>) -> State<Self::Yield, Self::Return>;
 
     fn yields(self: Pin<&mut Self>) -> Yields<&mut Self> {
-        return Yields { inner: self };
+        return Yields { inner: self, result: None };
     }
 }
 
-#[non_exhaustive]
-pub struct Yields<T> {
+pub struct Yields<T: DerefMut> where T::Target: Generator {
     pub inner: Pin<T>,
+    result: Option<<T::Target as Generator>::Return>
 }
 
-impl<G: Generator> From<Box<G>> for Yields<Box<G>> {
-    fn from(value: Box<G>) -> Self {
-        return Self {
-            inner: Box::into_pin(value),
-        };
+impl<T: DerefMut<Target = G>, G: Generator> Yields<T> {
+    pub fn result(&self) -> Option<&<T::Target as Generator>::Return> {
+        return self.result.as_ref()
+    }
+
+    pub fn result_mut(&mut self) -> Option<&mut <T::Target as Generator>::Return> {
+        return self.result.as_mut()
+    }
+
+    pub fn take_result(&mut self) -> Option<<T::Target as Generator>::Return> {
+        return self.result.take()
+    }
+
+    pub fn into_result(self) -> Option<<T::Target as Generator>::Return> {
+        return self.result
     }
 }
 
@@ -53,7 +63,10 @@ impl<T: DerefMut<Target = G>, G: Generator> Iterator for Yields<T> {
     fn next(&mut self) -> Option<Self::Item> {
         match self.inner.as_mut().resume() {
             State::Yield(x) => Some(x),
-            State::Return(_) => None,
+            State::Return(x) => {
+                self.result = Some(x);
+                None
+            },
         }
     }
 }
