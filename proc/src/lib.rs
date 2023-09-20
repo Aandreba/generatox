@@ -22,17 +22,13 @@ pub fn generator(body: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut lts = DefineLifetimes::default();
     sig = lts.fold_signature(sig);
     sig.generics.params.extend(
-        lts.uniques
+        lts.unique
             .iter()
             .cloned()
             .map(|x| GenericParam::Lifetime(LifetimeParam::new(x))),
     );
 
-    let lts = lts
-        .lts
-        .into_iter()
-        .fold(TokenStream::new(), |x, y| quote!(#x #y +));
-
+    let lts = lts.unique.map(|x| quote!(#x +));
     let block = Transformer(&ty).fold_block(block);
     let (arrow, output) = match sig.output {
         syn::ReturnType::Default => (Default::default(), parse_quote!(())),

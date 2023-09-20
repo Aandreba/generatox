@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "generatox"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cfg-if",
  "generatox-proc",
@@ -30,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "generatox-proc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cfg-if",
  "derive-syn-parse",
