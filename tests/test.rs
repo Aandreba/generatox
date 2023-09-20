@@ -42,6 +42,29 @@ generator! {
     }
 }
 
+generator! {
+    fn parse_selector_segment<'a>(
+        input: &'a str,
+        f: &'_ mut std::fmt::Formatter<'_>,
+        ) -> std::fmt::Result yield &'a str
+    {
+        f.write_str(input)?;
+        yield input;
+        return Ok(())
+    }
+}
+
+/*
+fn parse_selector_segment2<'a   : '__0, 'b   : '__0, '__0>(input: &'a str, f: &'__0 mut std::fmt::Formatter<'b>) -> impl '__0 + ::generatox::Generator<Yield=&'a str, Return=std::fmt::Result> {
+    let f = f as &'__0 mut std::fmt::Formatter<'__0>;
+    ::generatox::wrapper::Wrapper::new(async move {
+        f.write_str(input)?;
+        unsafe { ::generatox::wrapper::r#yield::<&'a str>(input) }.await;
+        return Ok(());
+    })
+}
+*/
+
 fn count(needle: u8, mut haystack: &[u8]) -> usize {
     todo!()
 }

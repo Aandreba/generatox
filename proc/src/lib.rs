@@ -1,6 +1,5 @@
 use crate::transform::Transformer;
 use parse::YieldFn;
-use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{fold::Fold, parse_macro_input, parse_quote, GenericParam, LifetimeParam};
 use transform::DefineLifetimes;
@@ -28,7 +27,9 @@ pub fn generator(body: proc_macro::TokenStream) -> proc_macro::TokenStream {
             .map(|x| GenericParam::Lifetime(LifetimeParam::new(x))),
     );
 
+    // let lts = lts.lts.iter().fold(TokenStream::new(), |prev, x| quote!(#prev #x +));
     let lts = lts.unique.map(|x| quote!(#x +));
+
     let block = Transformer(&ty).fold_block(block);
     let (arrow, output) = match sig.output {
         syn::ReturnType::Default => (Default::default(), parse_quote!(())),

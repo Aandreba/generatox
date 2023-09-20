@@ -1,8 +1,7 @@
 use proc_macro2::Span;
 use quote::format_ident;
 use std::collections::BTreeSet;
-use syn::{fold::Fold, parse_quote, token::Await, Expr, ExprAwait, ExprYield, Lifetime, Type, Token};
-use syn::ReturnType::Default;
+use syn::{fold::Fold, parse_quote, token::Await, Expr, ExprAwait, ExprYield, Lifetime, Type, GenericArgument};
 
 #[derive(Default)]
 pub struct DefineLifetimes {
@@ -10,34 +9,10 @@ pub struct DefineLifetimes {
     pub unique: Option<Lifetime>,
 }
 
-impl Fold for DefineLifetimes {
-    fn fold_generics(&mut self, mut i: syn::Generics) -> syn::Generics {
-        let mut created_unique = self.unique.is_some();
-        for lt in i.lifetimes_mut() {
-            if !created_unique {
-                let mut lt;
-                lt = Lifetime {
-                    apostrophe: Span::call_site(),
-                    ident: format_ident!("__0"),
-                };
-
-                self.lts.insert(lt.clone());
-                self.unique = Some(lt.clone());
-                created_unique = true
-            }
-
-            lt.bounds.extend(self.unique.clone());
-            lt.colon_token = Some(std::default::Default::default());
-            self.lts.insert(lt.lifetime.clone());
-        }
-
-        return syn::fold::fold_generics(self, i);
-    }
-
-    fn fold_type_reference(&mut self, mut i: syn::TypeReference) -> syn::TypeReference {
+impl DefineLifetimes {
+    fn unique(&mut self) -> &Lifetime {
         if self.unique.is_none() {
-            let mut lt;
-            lt = Lifetime {
+            let lt = Lifetime {
                 apostrophe: Span::call_site(),
                 ident: format_ident!("__0"),
             };
@@ -46,11 +21,47 @@ impl Fold for DefineLifetimes {
             self.unique = Some(lt.clone());
         }
 
+        return unsafe { self.unique.as_ref().unwrap_unchecked() }
+    }
+}
+
+impl Fold for DefineLifetimes {
+    fn fold_generics(&mut self, mut i: syn::Generics) -> syn::Generics {
+        for lt in i.lifetimes_mut() {
+            let unique = self.unique();
+
+            if lt.lifetime.ident == "_" {
+                lt.lifetime = unique.clone();
+            } else {
+                lt.bounds.push(unique.clone());
+                lt.colon_token = Some(std::default::Default::default());
+                self.lts.insert(lt.lifetime.clone());
+            }
+
+        }
+
+        return syn::fold::fold_generics(self, i);
+    }
+
+    fn fold_generic_argument(&mut self, mut i: GenericArgument) -> GenericArgument {
+        match &mut i {
+            GenericArgument::Lifetime(i) if i.ident == "_" => {
+                *i = self.unique().clone()
+            },
+            _ => {}
+        }
+
+        return syn::fold::fold_generic_argument(self, i);
+    }
+
+    fn fold_type_reference(&mut self, mut i: syn::TypeReference) -> syn::TypeReference {
+        let unique = self.unique();
+
         match &mut i.lifetime {
-            Some(lt) => {
+            Some(lt) if lt.ident != "_" => {
                 self.lts.insert(lt.clone());
             }
-            None => i.lifetime = self.unique.clone(),
+            _ => i.lifetime = Some(unique.clone()),
         }
 
         return syn::fold::fold_type_reference(self, i);
